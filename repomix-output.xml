@@ -40,6 +40,9 @@ The content is organized as follows:
 </file_summary>
 
 <directory_structure>
+.github/badges/branches.svg
+.github/badges/jacoco.svg
+.github/workflows/ci.yml
 .gitignore
 .mvn/wrapper/maven-wrapper.properties
 database.mv.db
@@ -81,6 +84,78 @@ src/test/resources/no_healthty.png
 
 <files>
 This section contains the contents of the repository's files.
+
+<file path=".github/badges/branches.svg">
+<svg xmlns="http://www.w3.org/2000/svg" width="106" height="20" role="img" aria-label="branches: 19.5%"><linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="r"><rect width="106" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#r)"><rect width="61" height="20" fill="#555"/><rect x="61" width="45" height="20" fill="#e05d44"/><rect width="106" height="20" fill="url(#s)"/></g><g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110"><text aria-hidden="true" x="315" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="507">branches</text><text x="315" y="140" transform="scale(.1)" fill="#fff" textLength="507">branches</text><text aria-hidden="true" x="825" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="350">19.5%</text><text x="825" y="140" transform="scale(.1)" fill="#fff" textLength="350">19.5%</text></g></svg>
+</file>
+
+<file path=".github/badges/jacoco.svg">
+<svg xmlns="http://www.w3.org/2000/svg" width="106" height="20" role="img" aria-label="coverage: 52.7%"><linearGradient id="s" x2="0" y2="100%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="r"><rect width="106" height="20" rx="3" fill="#fff"/></clipPath><g clip-path="url(#r)"><rect width="61" height="20" fill="#555"/><rect x="61" width="45" height="20" fill="#e05d44"/><rect width="106" height="20" fill="url(#s)"/></g><g fill="#fff" text-anchor="middle" font-family="Verdana,Geneva,DejaVu Sans,sans-serif" text-rendering="geometricPrecision" font-size="110"><text aria-hidden="true" x="315" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="510">coverage</text><text x="315" y="140" transform="scale(.1)" fill="#fff" textLength="510">coverage</text><text aria-hidden="true" x="825" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)" textLength="350">52.7%</text><text x="825" y="140" transform="scale(.1)" fill="#fff" textLength="350">52.7%</text></g></svg>
+</file>
+
+<file path=".github/workflows/ci.yml">
+name: Mi primer CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      checks: write
+      pull-requests: write
+
+    steps:
+    - name: Checkout del código
+      uses: actions/checkout@v4
+
+    - name: Configurar Java JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Dar permisos de ejecución al Wrapper de Maven
+      run: chmod +x mvnw
+
+    - name: Compilar el proyecto
+      run: ./mvnw compile --no-transfer-progress
+
+    - name: Ejecutar pruebas (Unitarias e Integración)
+      run: ./mvnw verify --no-transfer-progress
+
+    - name: Generar informe de resultados de tests en GitHub (Dorny)
+      uses: dorny/test-reporter@v1
+      if: always() # Se ejecuta aunque fallen algunos tests
+      with:
+        name: Resultados de Pruebas
+        path: target/surefire-reports/*.xml, target/failsafe-reports/*.xml
+        reporter: java-junit
+        fail-on-error: true
+
+    - name: Generar Badge de Cobertura con Jacoco
+      id: jacoco
+      uses: cicirello/jacoco-badge-generator@v2
+      with:
+        jacoco-csv-file: target/site/jacoco/jacoco.csv
+        badges-directory: .github/badges
+        generate-branches-badge: true
+
+    - name: Hacer Commit de los Badges Generados
+      if: github.event_name == 'push'
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add .github/badges/
+        git commit -m "Autogenerar badges de cobertura [skip ci]" || echo "No hay cambios para commitear"
+        git push
+</file>
 
 <file path=".gitignore">
 target/
@@ -714,132 +789,6 @@ Write-Output "MVN_CMD=$MAVEN_HOME/bin/$MVN_CMD"
         </plugins>
     </build>
 </project>
-</file>
-
-<file path="README.md">
-# SpringUMA — Medical Records System
-
-> ⚠️ Replace `<YOUR_USER>` and `<YOUR_REPO>` with your actual GitHub account details.
-
-A Spring Boot REST API that models a small medical records system. Built as a practice project for the **Software Maintenance and Testing** course at the University of Málaga.
-
----
-
-## Domain Model
-
-| Entity    | Description                                                             |
-|-----------|-------------------------------------------------------------------------|
-| `Medico`  | Medical doctor with `id`, `nombre`, `dni`, `especialidad`               |
-| `Paciente`| Patient with `id`, `nombre`, `dni`, `edad`, `cita`, assigned doctor     |
-| `Imagen`  | Medical image (binary, compressed) linked to a patient                  |
-| `Informe` | AI-generated prediction report linked to an image                       |
-
-Relationships: `Medico` ←1:N→ `Paciente` ←1:N→ `Imagen` ←1:N→ `Informe`
-
----
-
-## Project Structure
-
-```
-src/
-├── main/java/com/uma/example/springuma/
-│   ├── controller/
-│   │   ├── MedicoController.java
-│   │   ├── PacienteController.java
-│   │   ├── ImagenController.java
-│   │   └── InformeController.java
-│   ├── model/               # JPA entities, services and repositories
-│   └── utils/
-│       └── ImageUtils.java  # Compress / decompress helpers
-└── test/java/com/uma/example/springuma/
-    └── integration/
-        ├── base/AbstractIntegration.java              # Shared Spring Boot test config
-        ├── MedicoControllerMockMvcIT.java             # Doctor CRUD via MockMvc
-        ├── PacienteControllerMockMvcIT.java           # Patient CRUD via MockMvc
-        ├── ImagenControllerWebTestClientIT.java       # Image upload/download via WebTestClient
-        └── InformeControllerWebTestClientIT.java      # Report lifecycle via WebTestClient
-```
-
----
-
-## Requirements
-
-| Tool  | Min version |
-|-------|-------------|
-| Java  | 21          |
-| Maven | 3.8+        |
-
-No external database required — H2 in-memory is used for tests.
-
----
-
-## Running the application
-
-```bash
-./mvnw spring-boot:run
-```
-
-API available at `http://localhost:8080`.  
-Swagger UI: `http://localhost:8080/swagger-ui.html`
-
-### Main endpoints
-
-| Method | Path                      | Description                          |
-|--------|---------------------------|--------------------------------------|
-| GET    | `/medico/{id}`            | Get doctor by ID                     |
-| GET    | `/medico/dni/{dni}`       | Get doctor by DNI                    |
-| POST   | `/medico`                 | Create doctor                        |
-| PUT    | `/medico`                 | Update doctor                        |
-| DELETE | `/medico/{id}`            | Delete doctor                        |
-| GET    | `/paciente/{id}`          | Get patient by ID                    |
-| GET    | `/paciente/medico/{id}`   | List patients by doctor              |
-| POST   | `/paciente`               | Create patient                       |
-| PUT    | `/paciente`               | Update patient                       |
-| DELETE | `/paciente/{id}`          | Delete patient                       |
-| POST   | `/imagen`                 | Upload image (multipart)             |
-| GET    | `/imagen/{id}`            | Download image bytes                 |
-| GET    | `/imagen/info/{id}`       | Get image metadata                   |
-| GET    | `/imagen/predict/{id}`    | Get AI prediction for image          |
-| GET    | `/imagen/paciente/{id}`   | List images for a patient            |
-| DELETE | `/imagen/{id}`            | Delete image                         |
-| GET    | `/informe/{id}`           | Get report by ID                     |
-| GET    | `/informe/imagen/{id}`    | List reports for an image            |
-| POST   | `/informe`                | Create report                        |
-| DELETE | `/informe/{id}`           | Delete report                        |
-
----
-
-## Running tests
-
-```bash
-# Unit tests only
-./mvnw test
-
-# All tests (unit + integration)
-./mvnw verify
-```
-
----
-
-## CI/CD — GitHub Actions
-
-The workflow in `.github/workflows/ci.yml` triggers on every **push** and **pull request** and:
-
-1. Compiles the project with JDK 21.
-2. Runs unit tests (`maven-surefire-plugin`).
-3. Runs integration tests (`maven-failsafe-plugin`, classes ending in `IT`).
-4. Publishes a test report to the GitHub **Checks** tab via `dorny/test-reporter`.
-5. Uploads XML reports as a downloadable artifact (retained 7 days).
-
----
-
-## Technology Stack
-
-- Java 21 · Spring Boot 3.2
-- Spring Data JPA + H2
-- JUnit 5 · MockMvc · WebTestClient
-- SpringDoc OpenAPI (Swagger UI)
-- Maven · GitHub Actions
 </file>
 
 <file path="src/main/java/com/uma/example/springuma/controller/ImagenController.java">
@@ -2103,6 +2052,33 @@ public abstract class AbstractIntegration {
 }
 </file>
 
+<file path="src/test/java/com/uma/example/springuma/SpringumaApplicationTests.java">
+package com.uma.example.springuma;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+
+@SpringBootTest
+class SpringumaApplicationTests {
+
+    @Test
+    void contextLoads() {
+    }
+
+}
+</file>
+
+<file path="src/test/resources/application.properties">
+spring.datasource.url=jdbc:h2:mem:test_db
+spring.datasource.username=test
+spring.datasource.password=test
+spring.datasource.driver-class-name=org.h2.Driver
+spring.jpa.hibernate.ddl-auto=create-drop
+
+spring.http.multipart.max-file-size=10MB
+spring.http.multipart.max-request-size=11MB
+</file>
+
 <file path="src/test/java/com/uma/example/springuma/integration/ImagenControllerWebTestClientIT.java">
 package com.uma.example.springuma.integration;
 
@@ -2193,6 +2169,60 @@ public class ImagenControllerWebTestClientIT extends AbstractIntegration {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    @DisplayName("Subir imagen y confirmar su existencia en el listado del paciente")
+    void subirImagen_correctamente() {
+        subirImagen("healthy.png");
+
+        testClient.get().uri("/imagen/paciente/" + paciente.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Imagen.class)
+                .hasSize(1)
+                .consumeWith(response -> {
+                    Imagen img = response.getResponseBody().get(0);
+                    assertTrue("healthy.png".equals(img.getNombre()));
+                });
+    }
+
+    @Test
+    @DisplayName("Realizar predicción IA de una imagen subida")
+    void realizarPrediccion_Imagen() {
+        subirImagen("healthy.png");
+
+        Imagen img = testClient.get().uri("/imagen/paciente/" + paciente.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Imagen.class)
+                .returnResult().getResponseBody().get(0);
+
+        testClient.get().uri("/imagen/predict/" + img.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBody(String.class)
+                .consumeWith(response -> {
+                    String body = response.getResponseBody();
+                    assertTrue(body != null);
+                    assertTrue(body.contains("score")); // Confirmar que nos da el resultado aleatorio
+                });
+    }
+
+    @Test
+    @DisplayName("Eliminar una imagen")
+    void eliminarImagen() {
+        subirImagen("healthy.png");
+
+        Imagen img = testClient.get().uri("/imagen/paciente/" + paciente.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Imagen.class)
+                .returnResult().getResponseBody().get(0);
+
+        testClient.delete().uri("/imagen/" + img.getId())
+                .exchange()
+                .expectStatus().isNoContent();
     }
 
    }
@@ -2290,6 +2320,70 @@ public class InformeControllerWebTestClientIT extends AbstractIntegration {
                 .exchange()
                 .expectStatus().isOk();
 
+    }
+
+    @Test
+    @DisplayName("Crear informe y obtenerlo por ID de la imagen asociada")
+    void crearInforme_obtenerPorImagen() {
+        // Recuperamos la imagen que subimos en el setUp()
+        Imagen uploadedImage = testClient.get().uri("/imagen/paciente/" + paciente.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Imagen.class)
+                .returnResult().getResponseBody().get(0);
+
+        Informe nuevoInforme = new Informe();
+        nuevoInforme.setContenido("No se aprecian anomalías claras en la mamografía.");
+        nuevoInforme.setImagen(uploadedImage);
+
+        // Crear informe
+        testClient.post().uri("/informe")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(nuevoInforme), Informe.class)
+                .exchange()
+                .expectStatus().isCreated();
+
+        // Obtener informes de la imagen
+        testClient.get().uri("/informe/imagen/" + uploadedImage.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Informe.class)
+                .hasSize(1)
+                .consumeWith(response -> {
+                    Informe informeResult = response.getResponseBody().get(0);
+                    assertTrue("No se aprecian anomalías claras en la mamografía.".equals(informeResult.getContenido()));
+                    assertTrue(informeResult.getPrediccion() != null); // Comprobar que le ha asignado la predicción
+                });
+    }
+
+    @Test
+    @DisplayName("Eliminar un informe")
+    void eliminarInforme() {
+        Imagen uploadedImage = testClient.get().uri("/imagen/paciente/" + paciente.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Imagen.class)
+                .returnResult().getResponseBody().get(0);
+
+        Informe nuevoInforme = new Informe();
+        nuevoInforme.setContenido("Informe listo para eliminar");
+        nuevoInforme.setImagen(uploadedImage);
+
+        testClient.post().uri("/informe")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(nuevoInforme), Informe.class)
+                .exchange()
+                .expectStatus().isCreated();
+
+        Informe informeCreado = testClient.get().uri("/informe/imagen/" + uploadedImage.getId())
+                .exchange()
+                .expectStatus().isOk()
+                .expectBodyList(Informe.class)
+                .returnResult().getResponseBody().get(0);
+
+        testClient.delete().uri("/informe/" + informeCreado.getId())
+                .exchange()
+                .expectStatus().isNoContent();
     }
 }
 </file>
@@ -2476,7 +2570,7 @@ public class PacienteControllerMockMvcIT extends AbstractIntegration {
 
         paciente.setNombre("Pepito");
         mockMvc.perform(put("/paciente")
-                .contentType("aplication/json")
+                .contentType("application/json")
                 .content(objectMapper.writeValueAsString(paciente)))
                 .andExpect(status().isNoContent());
 
@@ -2486,34 +2580,157 @@ public class PacienteControllerMockMvcIT extends AbstractIntegration {
                 .andExpect(jsonPath("$.dni").value(paciente.getDni()));
     }
 
-}
-</file>
+    @Test
+    @DisplayName("Obtener lista de pacientes de un médico")
+    void getPacientesByMedico() throws Exception {
+        crearMedico(medico);
+        crearPaciente(paciente);
 
-<file path="src/test/java/com/uma/example/springuma/SpringumaApplicationTests.java">
-package com.uma.example.springuma;
-
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
-
-@SpringBootTest
-class SpringumaApplicationTests {
+        mockMvc.perform(get("/paciente/medico/" + medico.getId()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].nombre").value(paciente.getNombre()));
+    }
 
     @Test
-    void contextLoads() {
+    @DisplayName("Eliminar paciente")
+    void deletePaciente() throws Exception {
+        crearMedico(medico);
+        crearPaciente(paciente);
+
+        mockMvc.perform(delete("/paciente/" + paciente.getId()))
+                .andExpect(status().isOk());
     }
 
 }
 </file>
 
-<file path="src/test/resources/application.properties">
-spring.datasource.url=jdbc:h2:mem:test_db
-spring.datasource.username=test
-spring.datasource.password=test
-spring.datasource.driver-class-name=org.h2.Driver
-spring.jpa.hibernate.ddl-auto=create-drop
+<file path="README.md">
+# SpringUMA — Medical Records System
 
-spring.http.multipart.max-file-size=10MB
-spring.http.multipart.max-request-size=11MB
+[![Estado del Build y Tests](https://github.com/Javierub32/Pr06---Infraestructuras.git/actions/workflows/ci.yml/badge.svg)](https://github.com/Javierub32/Pr06---Infraestructuras.git/actions/workflows/ci.yml)
+[![Cobertura (Jacoco)](https://raw.githubusercontent.com/Javierub32/Pr06---Infraestructuras.git/main/.github/badges/jacoco.svg)](https://github.com/Javierub32/Pr06---Infraestructuras.git/actions)
+[![Ramas Probadas](https://raw.githubusercontent.com/Javierub32/Pr06---Infraestructuras.git/main/.github/badges/branches.svg)](https://github.com/Javierub32/Pr06---Infraestructuras.git/actions)
+
+A Spring Boot REST API that models a small medical records system. Built as a practice project for the **Software Maintenance and Testing** course at the University of Málaga.
+
+---
+
+## Domain Model
+
+| Entity    | Description                                                             |
+|-----------|-------------------------------------------------------------------------|
+| `Medico`  | Medical doctor with `id`, `nombre`, `dni`, `especialidad`               |
+| `Paciente`| Patient with `id`, `nombre`, `dni`, `edad`, `cita`, assigned doctor     |
+| `Imagen`  | Medical image (binary, compressed) linked to a patient                  |
+| `Informe` | AI-generated prediction report linked to an image                       |
+
+Relationships: `Medico` ←1:N→ `Paciente` ←1:N→ `Imagen` ←1:N→ `Informe`
+
+---
+
+## Project Structure
+
+```
+src/
+├── main/java/com/uma/example/springuma/
+│   ├── controller/
+│   │   ├── MedicoController.java
+│   │   ├── PacienteController.java
+│   │   ├── ImagenController.java
+│   │   └── InformeController.java
+│   ├── model/               # JPA entities, services and repositories
+│   └── utils/
+│       └── ImageUtils.java  # Compress / decompress helpers
+└── test/java/com/uma/example/springuma/
+    └── integration/
+        ├── base/AbstractIntegration.java              # Shared Spring Boot test config
+        ├── MedicoControllerMockMvcIT.java             # Doctor CRUD via MockMvc
+        ├── PacienteControllerMockMvcIT.java           # Patient CRUD via MockMvc
+        ├── ImagenControllerWebTestClientIT.java       # Image upload/download via WebTestClient
+        └── InformeControllerWebTestClientIT.java      # Report lifecycle via WebTestClient
+```
+
+---
+
+## Requirements
+
+| Tool  | Min version |
+|-------|-------------|
+| Java  | 21          |
+| Maven | 3.8+        |
+
+No external database required — H2 in-memory is used for tests.
+
+---
+
+## Running the application
+
+```bash
+./mvnw spring-boot:run
+```
+
+API available at `http://localhost:8080`.  
+Swagger UI: `http://localhost:8080/swagger-ui.html`
+
+### Main endpoints
+
+| Method | Path                      | Description                          |
+|--------|---------------------------|--------------------------------------|
+| GET    | `/medico/{id}`            | Get doctor by ID                     |
+| GET    | `/medico/dni/{dni}`       | Get doctor by DNI                    |
+| POST   | `/medico`                 | Create doctor                        |
+| PUT    | `/medico`                 | Update doctor                        |
+| DELETE | `/medico/{id}`            | Delete doctor                        |
+| GET    | `/paciente/{id}`          | Get patient by ID                    |
+| GET    | `/paciente/medico/{id}`   | List patients by doctor              |
+| POST   | `/paciente`               | Create patient                       |
+| PUT    | `/paciente`               | Update patient                       |
+| DELETE | `/paciente/{id}`          | Delete patient                       |
+| POST   | `/imagen`                 | Upload image (multipart)             |
+| GET    | `/imagen/{id}`            | Download image bytes                 |
+| GET    | `/imagen/info/{id}`       | Get image metadata                   |
+| GET    | `/imagen/predict/{id}`    | Get AI prediction for image          |
+| GET    | `/imagen/paciente/{id}`   | List images for a patient            |
+| DELETE | `/imagen/{id}`            | Delete image                         |
+| GET    | `/informe/{id}`           | Get report by ID                     |
+| GET    | `/informe/imagen/{id}`    | List reports for an image            |
+| POST   | `/informe`                | Create report                        |
+| DELETE | `/informe/{id}`           | Delete report                        |
+
+---
+
+## Running tests
+
+```bash
+# Unit tests only
+./mvnw test
+
+# All tests (unit + integration)
+./mvnw verify
+```
+
+---
+
+## CI/CD — GitHub Actions
+
+The workflow in `.github/workflows/ci.yml` triggers on every **push** and **pull request** and:
+
+1. Compiles the project with JDK 21.
+2. Runs unit tests (`maven-surefire-plugin`).
+3. Runs integration tests (`maven-failsafe-plugin`, classes ending in `IT`).
+4. Publishes a test report to the GitHub **Checks** tab via `dorny/test-reporter`.
+5. Uploads XML reports as a downloadable artifact (retained 7 days).
+
+---
+
+## Technology Stack
+
+- Java 21 · Spring Boot 3.2
+- Spring Data JPA + H2
+- JUnit 5 · MockMvc · WebTestClient
+- SpringDoc OpenAPI (Swagger UI)
+- Maven · GitHub Actions
 </file>
 
 </files>

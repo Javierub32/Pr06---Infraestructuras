@@ -1,8 +1,8 @@
 # SpringUMA — Medical Records System
 
-[![Estado del Build y Tests](https://github.com/Javierub32/Pr06---Infraestructuras.git/actions/workflows/ci.yml/badge.svg)](https://github.com/Javierub32/Pr06---Infraestructuras.git/actions/workflows/ci.yml)
-[![Cobertura (Jacoco)](https://raw.githubusercontent.com/Javierub32/Pr06---Infraestructuras.git/main/.github/badges/jacoco.svg)](https://github.com/Javierub32/Pr06---Infraestructuras.git/actions)
-[![Ramas Probadas](https://raw.githubusercontent.com/Javierub32/Pr06---Infraestructuras.git/main/.github/badges/branches.svg)](https://github.com/Javierub32/Pr06---Infraestructuras.git/actions)
+[![Estado del Build y Tests](https://github.com/Javierub32/Pr06---Infraestructuras/actions/workflows/ci.yml/badge.svg)](https://github.com/Javierub32/Pr06---Infraestructuras/actions/workflows/ci.yml)
+[![Cobertura (Jacoco)](https://raw.githubusercontent.com/Javierub32/Pr06---Infraestructuras/main/.github/badges/jacoco.svg)](https://github.com/Javierub32/Pr06---Infraestructuras/actions)
+[![Ramas Probadas](https://raw.githubusercontent.com/Javierub32/Pr06---Infraestructuras/main/.github/badges/branches.svg)](https://github.com/Javierub32/Pr06---Infraestructuras/actions)
 
 A Spring Boot REST API that models a small medical records system. Built as a practice project for the **Software Maintenance and Testing** course at the University of Málaga.
 
